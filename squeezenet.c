@@ -78,7 +78,7 @@ static void RunNetwork()
   //Checki Results
   int max_class=0;
   int max_value=-INT32_MAX;
-  for (int i=0;i<1001;i++){
+  for (int i=0;i<AT_OUTPUT_SIZE;i++){
     if(max_value<ResOut[i]){
       max_value=ResOut[i];
       max_class=i;
