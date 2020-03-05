@@ -64,9 +64,9 @@ include model_decl.mk
 #             $(CNN_AT_PATH)/CNN_Conv_DP_BasicKernels.c \
 #             $(CNN_AT_PATH)/CNN_SoftMax.c
 
-APP_SRCS += $(APP).c $(MODEL_COMMON_SRCS) $(MODEL_SRCS)
+APP_SRCS += $(APP).c ImgIO.c $(MODEL_COMMON_SRCS) $(MODEL_SRCS)
 
-APP_INC += $(TILER_INC) $(CNN_AT_PATH) $(AT_GENERATED)
+APP_INC += $(TILER_INC) $(CNN_AT_PATH) $(AT_GENERATED) $(MODEL_BUILD)
 
 APP_CFLAGS += -O3 -w -s -mno-memcpy -fno-tree-loop-distribute-patterns 
 APP_CFLAGS += -I. -I$(MODEL_COMMON_INC) -I$(TILER_EMU_INC) -I$(TILER_INC) -I$(TILER_CNN_KERNEL_PATH) -I$(AT_GENERATED) -I$(MODEL_BUILD)

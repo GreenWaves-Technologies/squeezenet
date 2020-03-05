@@ -3,4 +3,4 @@ set image_width 224
 adjust
 fusions
 aquant -f 8 images/*
-save_state BUILD_MODEL_16BIT
+save_state
