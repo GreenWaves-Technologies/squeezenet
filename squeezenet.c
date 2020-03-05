@@ -103,7 +103,6 @@ int start()
   struct pi_device cluster_dev;
   struct pi_cluster_task *task;
   struct pi_cluster_conf conf;
-//  gv_vcd_configure(0, NULL);
 #endif
 
   //Input image size
@@ -126,10 +125,6 @@ int start()
   task->slave_stack_size = SLAVE_STACK_SIZE;
   task->arg = NULL;
 #endif
-
-  // Allocate some stacks for cluster in L1, rt_nb_pe returns how many cores exist.
-//  void *stacks = rt_alloc(RT_ALLOC_CL_DATA, STACK_SIZE*rt_nb_pe());
-//  if (stacks == NULL) return -1;
 
   printf("Constructor\n");
 

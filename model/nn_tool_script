@@ -1,0 +1,4 @@
+adjust
+fusions
+aquant -f 8 images/*
+gen -T  Tensors -t AT_model.c
