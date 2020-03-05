@@ -32,6 +32,7 @@
 #define AT_INPUT_COLORS 3
 
 #define AT_INPUT_SIZE (AT_INPUT_WIDTH*AT_INPUT_HEIGHT*AT_INPUT_COLORS)
+#define AT_OUTPUT_SIZE 1001
 
 #ifndef STACK_SIZE
 #define STACK_SIZE     2048 
@@ -75,11 +76,16 @@ static void RunNetwork()
   printf("\n");
   
   //Checki Results
-  if (ResOut[1] > ResOut[0]) {
-    printf("person seen (%d, %d)\n", ResOut[0], ResOut[1]);
-  } else {
-    printf("no person seen (%d, %d)\n", ResOut[0], ResOut[1]);
+  int max_class=0;
+  int max_value=-INT32_MAX;
+  for (int i=0;i<1001;i++){
+    if(max_value<ResOut[i]){
+      max_value=ResOut[i];
+      max_class=i;
+    }
   }
+
+  printf("Class detected: %d, with value: %f\n", max_class, FIX2FP(max_value,15));
   printf("\n");
 }
 
@@ -129,10 +135,10 @@ int start()
   printf("Constructor\n");
 
   // IMPORTANT - MUST BE CALLED AFTER THE CLUSTER IS SWITCHED ON!!!!
-
-  if (__PREFIX(CNN_Construct)())
+  int err;
+  if (err=__PREFIX(CNN_Construct)())
   {
-    printf("Graph constructor exited with an error\n");
+    printf("Graph constructor exited with %d error\n",err);
     return 1;
   }
 
@@ -152,7 +158,7 @@ int start()
   printf("Finished reading image\n");
 
 
-  ResOut = (short int *) AT_L2_ALLOC(0, 2*sizeof(short int));
+  ResOut = (short int *) AT_L2_ALLOC(0, AT_OUTPUT_SIZE*sizeof(short int));
 
   if (ResOut==0) {
     printf("Failed to allocate Memory for Result (%ld bytes)\n", 2*sizeof(short int));
@@ -169,7 +175,7 @@ int start()
   
   __PREFIX(CNN_Destruct)();
 
-/*#ifdef PERF
+#ifdef PERF
 	unsigned int TotalCycles = 0, TotalOper = 0;
 	printf("\n");
 	for (int i=0; i<(sizeof(AT_GraphPerf)/sizeof(unsigned int)); i++) {
@@ -179,7 +185,7 @@ int start()
 	printf("\n");
 	printf("%45s: Cycles: %10d, Operations: %10d, Operations/Cycle: %f\n", "Total", TotalCycles, TotalOper, ((float) TotalOper)/ TotalCycles);
 	printf("\n");
-#endif*/
+#endif
 
 #ifdef __EMUL__
   dt_close_dump_file();

@@ -15,9 +15,16 @@ AT_INPUT_COLORS=3
 pulpChip = GAP
 RM=rm -f
 
-IMAGE=$(CURDIR)/images/COCO_val2014_000000514089_1.ppm
+IMAGE=$(CURDIR)/images/sample.ppm
 
+export GAP_USE_OPENOCD=1
 io=host
+
+#ifeq ($(ALREADY_FLASHED),)
+        # this is for the board
+READFS_FILES=$(realpath $(MODEL_TENSORS))
+PLPBRIDGE_FLAGS = -f
+#endif
 
 QUANT_BITS=8
 BUILD_DIR=BUILD
@@ -40,29 +47,11 @@ CLUSTER_STACK_SIZE=2048
 CLUSTER_SLAVE_STACK_SIZE=1024
 TOTAL_STACK_SIZE=$(shell expr $(CLUSTER_STACK_SIZE) \+ $(CLUSTER_SLAVE_STACK_SIZE) \* 7)
 MODEL_L1_MEMORY=$(shell expr 60000 \- $(TOTAL_STACK_SIZE))
-MODEL_L2_MEMORY=450000
+MODEL_L2_MEMORY=200000
 MODEL_L3_MEMORY=8388608
 MODEL_SIZE_CFLAGS = -DAT_INPUT_HEIGHT=$(AT_INPUT_HEIGHT) -DAT_INPUT_WIDTH=$(AT_INPUT_WIDTH) -DAT_INPUT_COLORS=$(AT_INPUT_COLORS)
 
 include model_decl.mk
-
-#MODEL_COMMON ?= ../common
-#MODEL_COMMON_INC ?= $(MODEL_COMMON)/src
-#MODEL_COMMON_SRC ?= $(MODEL_COMMON)/src
-#MODEL_COMMON_SRC_FILES ?= ImgIO.c helpers.c
-#MODEL_COMMON_SRCS = $(realpath $(addprefix $(MODEL_COMMON_SRC)/,$(MODEL_COMMON_SRC_FILES)))
-#CNN_AT_PATH = $(TILER_GENERATOR_PATH)/CNN
-
-# APP_SRCS += $(MODEL_BUILD)/$(APP)_ATmodel.c $(AT_GENERATED)/$(APP)Kernels.c \
-#             $(APP).c \
-#             $(CNN_AT_PATH)/CNN_BiasReLULinear_BasicKernels.c \
-#             $(CNN_AT_PATH)/CNN_Conv_BasicKernels.c \
-#             $(CNN_AT_PATH)/CNN_MatAlgebra.c \
-#             $(CNN_AT_PATH)/CNN_Pooling_BasicKernels.c \
-#             $(CNN_AT_PATH)/CNN_Conv_DW_DP_BasicKernels.c \
-#             $(CNN_AT_PATH)/CNN_Conv_DW_BasicKernels.c \
-#             $(CNN_AT_PATH)/CNN_Conv_DP_BasicKernels.c \
-#             $(CNN_AT_PATH)/CNN_SoftMax.c
 
 APP_SRCS += $(APP).c ImgIO.c $(MODEL_COMMON_SRCS) $(MODEL_SRCS)
 
