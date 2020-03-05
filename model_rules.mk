@@ -32,33 +32,11 @@ ifdef MODEL_L3_MEMORY
   MODEL_GEN_EXTRA_FLAGS += --L3 $(MODEL_L3_MEMORY)
 endif
 
-$(MODEL_TRAIN_BUILD):
-	mkdir $(MODEL_TRAIN_BUILD)
-
 $(MODEL_BUILD):
 	mkdir $(MODEL_BUILD)	
 
-ifneq ("$(wildcard $(MODEL_TRAIN))","")
-# Runs the Keras script to create and train the model
-# Exports the graph and trained tensors in H5 format
-$(MODEL_H5): $(MODEL_TRAIN) | $(MODEL_TRAIN_BUILD)
-	echo "CREATING AND TRAINING KERAS MODEL"
-	$(MODEL_PYTHON) $(MODEL_TRAIN) $(MODEL_TRAIN_FLAGS) -e $(TRAINING_EPOCHS) $@
-
-# PHONY targets defined for each step so that you can execute in sequence to
-# demonstrate the flow
-train: $(MODEL_H5)
-
-# Converts the H5 file to TFLITE format
-$(MODEL_TFLITE): $(MODEL_H5) | $(MODEL_BUILD)
-	echo "CONVERTING KERAS H5 TO TENSORFLOW LITE FLATBUFFER"
-	$(MODEL_PYTHON) model/h5_to_tflite.py $< $@
-
-tflite: $(MODEL_TFLITE)
-else
 $(MODEL_TFLITE): $(TRAINED_TFLITE_MODEL) | $(MODEL_BUILD)
 	cp $< $@
-endif
 
 # Creates an NNTOOL state file by running the commands in the script
 # These commands could be run interactively
@@ -101,12 +79,10 @@ clean_model:
 	$(RM) -rf $(MODEL_BUILD)
 	$(RM) *.dat
 
-clean_train:
-	$(RM) -rf $(MODEL_TRAIN_BUILD)
 
 clean_images:
 	$(RM) -rf $(IMAGES)
 
 test_images: $(IMAGES)
 
-.PHONY: model clean_model clean_train test_images clean_images train nntool_gen nntool_state tflite compile_model
+.PHONY: model clean_model test_images clean_images nntool_gen nntool_state tflite compile_model

@@ -1,4 +1,6 @@
+set image_height 224
+set image_width 224
 adjust
 fusions
 aquant -f 8 images/*
-gen -T  Tensors -t AT_model.c
+save_state BUILD_MODEL_16BIT
