@@ -2,7 +2,8 @@ set image_height 224
 set image_width 224
 adjust
 fusions
-aquant -f 8 images/*
+aquant -f 16 images/sample-1.png
+#aquant -f 8 images/*
 #set default_output_exec_location AT_MEM_L3_HRAM
 set l3_ram_ext_managed 0
 set l2_ram_ext_managed 0
@@ -10,6 +11,7 @@ set graph_reorder_constant_in 1
 set graph_produce_node_names 1
 set graph_produce_operinfos 1
 set graph_monitor_cycles 1
-#nodeoption * ENABLEIM2COL 1
+nodeoption * ENABLEIM2COL 1
 #set graph_const_exec_from_flash 1
+#set dump_tensors true
 save_state
