@@ -34,6 +34,8 @@
 #define AT_INPUT_SIZE (AT_INPUT_WIDTH*AT_INPUT_HEIGHT*AT_INPUT_COLORS)
 #define AT_OUTPUT_SIZE 1001
 
+
+//This is defined in the Makefile, in case it is not we define it here
 #ifndef STACK_SIZE
 #define STACK_SIZE     2048 
 #endif
@@ -54,7 +56,7 @@ AT_HYPERFLASH_FS_EXT_ADDR_TYPE __PREFIX(_L3_Flash) = 0;
 
 // Softmax always outputs Q15 short int even from 8 bit input
 L2_MEM short int *ResOut;
-typedef signed char IMAGE_IN_T;
+typedef short int IMAGE_IN_T;
 L2_MEM IMAGE_IN_T *ImageIn;
 
 #ifdef PERF
@@ -123,7 +125,7 @@ int start()
         printf("Cluster open failed !\n");
         pmsis_exit(-4);
     }
-//  pi_freq_set(PI_FREQ_DOMAIN_CL,175000000);
+  pi_freq_set(PI_FREQ_DOMAIN_CL,175000000);
   task = pmsis_l2_malloc(sizeof(struct pi_cluster_task));
   memset(task, 0, sizeof(struct pi_cluster_task));
   task->entry = &RunNetwork;
@@ -148,15 +150,17 @@ int start()
   } else {
     printf("ImageIn address: %ld \n", ImageIn);
   }
-
+  
   printf("Reading image\n");
   //Reading Image from Bridge
-  if (ReadImageFromFile(ImageName, AT_INPUT_WIDTH, AT_INPUT_HEIGHT, AT_INPUT_COLORS, (char *)ImageIn, AT_INPUT_SIZE*sizeof(IMAGE_IN_T), 1, 0)) {
+  unsigned char * ImageInChar = ImageIn;
+  if (ReadImageFromFile(ImageName, AT_INPUT_WIDTH, AT_INPUT_HEIGHT, AT_INPUT_COLORS, (char *)ImageInChar, AT_INPUT_SIZE*sizeof(IMAGE_IN_T), 1, 0)) {
     printf("Failed to load image %s\n", ImageName);
     return 1;
   }
   printf("Finished reading image\n");
 
+  for (int px=0;px<AT_INPUT_SIZE;px++) ImageIn[px] = ImageInChar[px] << 7;
 
   ResOut = (short int *) AT_L2_ALLOC(0, AT_OUTPUT_SIZE*sizeof(short int));
 
