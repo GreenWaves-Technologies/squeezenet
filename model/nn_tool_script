@@ -1,11 +1,10 @@
 set debug true
-#freeze output_1
-#freeze output_2
 #freeze input_1
 adjust
 fusions --scale8
+set input_norm_func "x: (x.astype(np.float) - 128)/128"
 #imageformat input_1 rgb565_rgb888 offset_int8
-aquant -s SQ8 -f 8 images/sample-1.png
+aquant -s SQ8 images/sample-0.png
 #aquant -s POW2 -f 16 images/*
 set default_output_exec_location "AT_MEM_L3_HRAM"
 set l3_ram_ext_managed false
