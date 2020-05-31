@@ -56,7 +56,7 @@ AT_HYPERFLASH_FS_EXT_ADDR_TYPE __PREFIX(_L3_Flash) = 0;
 
 // Softmax always outputs Q15 short int even from 8 bit input
 L2_MEM short int *ResOut;
-typedef short int IMAGE_IN_T;
+typedef unsigned char IMAGE_IN_T;
 L2_MEM IMAGE_IN_T *ImageIn;
 
 #ifdef PERF
@@ -153,14 +153,12 @@ int start()
   
   printf("Reading image\n");
   //Reading Image from Bridge
-  unsigned char * ImageInChar = ImageIn;
-  if (ReadImageFromFile(ImageName, AT_INPUT_WIDTH, AT_INPUT_HEIGHT, AT_INPUT_COLORS, (char *)ImageInChar, AT_INPUT_SIZE*sizeof(IMAGE_IN_T), 1, 0)) {
+  if (ReadImageFromFile(ImageName, AT_INPUT_WIDTH, AT_INPUT_HEIGHT, AT_INPUT_COLORS,
+                        ImageIn, AT_INPUT_SIZE*sizeof(IMAGE_IN_T), IMGIO_OUTPUT_CHAR, 0)) {
     printf("Failed to load image %s\n", ImageName);
     return 1;
   }
   printf("Finished reading image\n");
-
-  for (int px=0;px<AT_INPUT_SIZE;px++) ImageIn[px] = ImageInChar[px] << 7;
 
   ResOut = (short int *) AT_L2_ALLOC(0, AT_OUTPUT_SIZE*sizeof(short int));
 
@@ -191,9 +189,7 @@ int start()
 	printf("\n");
 #endif
 
-#ifdef __EMUL__
-  dt_close_dump_file();
-#else
+#ifndef __EMUL__
   pmsis_exit(0);
 #endif
 

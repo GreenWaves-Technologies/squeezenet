@@ -13,7 +13,20 @@ else
   MODEL_TRAIN_FLAGS =
 endif
 
+ifdef MODEL_SQ8
+  CNN_GEN = $(MODEL_GEN_SQ8)
+  CNN_GEN_INCLUDE = $(MODEL_GEN_INCLUDE_SQ8)
+  CNN_LIB = $(MODEL_LIB_SQ8)
+  CNN_LIB_INCLUDE = $(MODEL_LIB_INCLUDE_SQ8)
+else
+  CNN_GEN = $(MODEL_GEN_POW2)
+  CNN_GEN_INCLUDE = $(MODEL_GEN_INCLUDE_POW2)
+  CNN_LIB = $(MODEL_LIB_POW2)
+  CNN_LIB_INCLUDE = $(MODEL_LIB_INCLUDE_POW2)
+endif
+
 USE_DISP=1
+
 ifdef USE_DISP
   SDL_FLAGS= -lSDL2 -lSDL2_ttf
 else
@@ -32,8 +45,9 @@ ifdef MODEL_L3_MEMORY
   MODEL_GEN_EXTRA_FLAGS += --L3 $(MODEL_L3_MEMORY)
 endif
 
+
 $(MODEL_BUILD):
-	mkdir $(MODEL_BUILD)	
+	mkdir $(MODEL_BUILD)
 
 $(MODEL_TFLITE): $(TRAINED_TFLITE_MODEL) | $(MODEL_BUILD)
 	cp $< $@
@@ -43,26 +57,26 @@ $(MODEL_TFLITE): $(TRAINED_TFLITE_MODEL) | $(MODEL_BUILD)
 # The commands:
 # 	Adjust the model to match AutoTiler tensor order
 #	Fuse nodes together to match fused AutoTiler generators
-#	Auto quantify the graph
+#	Quantize the graph if not already done with tflite quantization
 #	Save the graph state files
 
 $(MODEL_STATE): $(MODEL_TFLITE) $(IMAGES) $(NNTOOL_SCRIPT) | $(MODEL_BUILD)
 	echo "GENERATING NNTOOL STATE FILE"
-	$(NNTOOL) -s $(NNTOOL_SCRIPT) $<
+	$(NNTOOL) -s $(NNTOOL_SCRIPT) $< $(NNTOOL_EXTRA_FLAGS)
 
 nntool_state: $(MODEL_STATE)
 
 # Runs NNTOOL with its state file to generate the autotiler model code
 $(MODEL_BUILD)/$(MODEL_SRC): $(MODEL_STATE) $(MODEL_TFLITE) | $(MODEL_BUILD)
 	echo "GENERATING AUTOTILER MODEL"
-	$(NNTOOL) -g -M $(MODEL_BUILD) -m $(MODEL_SRC) -T $(TENSORS_DIR) $(MODEL_GENFLAGS_EXTRA) $<
+	$(NNTOOL) -g -M $(MODEL_BUILD) -m $(MODEL_SRC) -T $(TENSORS_DIR) -H $(MODEL_HEADER) $(MODEL_GENFLAGS_EXTRA) $<
 
 nntool_gen: $(MODEL_BUILD)/$(MODEL_SRC)
 
 # Build the code generator from the model code
-$(MODEL_GEN_EXE): $(MODEL_BUILD)/$(MODEL_SRC) $(EXTRA_GENERATOR_SRC) | $(MODEL_BUILD)
+$(MODEL_GEN_EXE): $(CNN_GEN) $(MODEL_BUILD)/$(MODEL_SRC) $(EXTRA_GENERATOR_SRC) | $(MODEL_BUILD)
 	echo "COMPILING AUTOTILER MODEL"
-	gcc -g -o $(MODEL_GEN_EXE) -I. -I$(TILER_INC) -I$(TILER_EMU_INC) -I$(TILER_CNN_GENERATOR_PATH) $(MODEL_BUILD)/$(MODEL_SRC) $(TILER_CNN_GENERATOR_PATH)/CNN_Generators.c $(EXTRA_GENERATOR_SRC) $(TILER_LIB) $(SDL_FLAGS)
+	gcc -g -o $(MODEL_GEN_EXE) -I. -I$(TILER_INC) -I$(TILER_EMU_INC) $(CNN_GEN_INCLUDE) $(CNN_LIB_INCLUDE) $? $(TILER_LIB)
 
 compile_model: $(MODEL_GEN_EXE)
 
@@ -77,12 +91,14 @@ model: $(MODEL_GEN_C)
 clean_model:
 	$(RM) $(MODEL_GEN_EXE)
 	$(RM) -rf $(MODEL_BUILD)
-	$(RM) *.dat
+	$(RM) $(MODEL_BUILD)/*.dat
 
+clean_train:
+	$(RM) -rf $(MODEL_TRAIN_BUILD)
 
 clean_images:
 	$(RM) -rf $(IMAGES)
 
 test_images: $(IMAGES)
 
-.PHONY: model clean_model test_images clean_images nntool_gen nntool_state tflite compile_model
+.PHONY: model clean_model clean_train test_images clean_images train nntool_gen nntool_state tflite compile_model
