@@ -79,31 +79,19 @@ static void RunNetwork()
   
   //Checki Results
   int max_class=0;
-  int max_value=-INT32_MAX;
+  int max_value=0;
   for (int i=0;i<AT_OUTPUT_SIZE;i++){
-    if(max_value<ResOut[i]){
+    if(ResOut[i]>max_value){
       max_value=ResOut[i];
       max_class=i;
     }
   }
 
-  printf("Class detected: %d, with value: %f\n", max_class, FIX2FP(max_value,15));
+  printf("Class detected: %d, with value: %f\n", max_class, max_value);
+  //FIX2FP(max_value,15);
   printf("\n");
 }
 
-#if defined(__EMUL__)
-int main(int argc, char *argv[]) 
-{
-  if (argc < 2) {
-    printf("Usage: %s [image_file]\n", argv[0]);
-    exit(1);
-  }
-  char *ImageName = argv[1];
-  if (dt_open_dump_file(TENSOR_DUMP_FILE)) {
-    printf("Failed to open tensor dump file %s.\n", TENSOR_DUMP_FILE);
-    exit(1);
-  }
-#else
 int start()
 {
   char *ImageName = __XSTR(AT_IMAGE);
@@ -111,13 +99,11 @@ int start()
   struct pi_device cluster_dev;
   struct pi_cluster_task *task;
   struct pi_cluster_conf conf;
-#endif
 
   //Input image size
 
   printf("Entering main controller\n");
 
-#ifndef __EMUL__
   pi_cluster_conf_init(&conf);
   pi_open_from_conf(&cluster_dev, (void *)&conf);
   if (pi_cluster_open(&cluster_dev))
@@ -132,7 +118,6 @@ int start()
   task->stack_size = STACK_SIZE;
   task->slave_stack_size = SLAVE_STACK_SIZE;
   task->arg = NULL;
-#endif
 
   printf("Constructor\n");
 
@@ -141,12 +126,13 @@ int start()
   if (err=__PREFIX(CNN_Construct)())
   {
     printf("Graph constructor exited with %d error\n",err);
-    return 1;
+    pmsis_exit(-1);
   }
 
   ImageIn = pmsis_l2_malloc(AT_INPUT_SIZE*sizeof(IMAGE_IN_T));
   if (ImageIn==0){
     printf("error allocating %ld \n", AT_INPUT_SIZE*sizeof(IMAGE_IN_T));
+    pmsis_exit(-1);
   } else {
     printf("ImageIn address: %ld \n", ImageIn);
   }
@@ -156,7 +142,8 @@ int start()
   if (ReadImageFromFile(ImageName, AT_INPUT_WIDTH, AT_INPUT_HEIGHT, AT_INPUT_COLORS,
                         ImageIn, AT_INPUT_SIZE*sizeof(IMAGE_IN_T), IMGIO_OUTPUT_CHAR, 0)) {
     printf("Failed to load image %s\n", ImageName);
-    return 1;
+    pmsis_exit(-1);
+    
   }
   printf("Finished reading image\n");
 
@@ -164,16 +151,12 @@ int start()
 
   if (ResOut==0) {
     printf("Failed to allocate Memory for Result (%ld bytes)\n", 2*sizeof(short int));
-    return 1;
+    pmsis_exit(-1);
   }
 
   printf("Call cluster\n");
   // Execute the function "RunNetwork" on the cluster.
-#ifdef __EMUL__
-  RunNetwork(NULL);
-#else
   pi_cluster_send_task_to_cl(&cluster_dev, task);
-#endif
   
   __PREFIX(CNN_Destruct)();
 
@@ -189,11 +172,8 @@ int start()
 	printf("\n");
 #endif
 
-#ifndef __EMUL__
-  pmsis_exit(0);
-#endif
-
   printf("Ended\n");
+  pmsis_exit(0);
   return 0;
 }
 
