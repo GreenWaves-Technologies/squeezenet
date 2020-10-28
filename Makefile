@@ -8,6 +8,7 @@ ifndef GAP_SDK_HOME
   $(error Source sourceme in gap_sdk first)
 endif
 
+APP=squeezenet
 MODEL_PREFIX = squeezenet
 MODEL_SQ8=1
 AT_INPUT_WIDTH=224
@@ -16,7 +17,9 @@ AT_INPUT_COLORS=3
 pulpChip = GAP
 RM=rm -f
 
-IMAGE=$(CURDIR)/images/sample.ppm
+PMSIS_OS?=pulpos
+
+IMAGE=$(CURDIR)/images/sample-8.ppm
 
 export GAP_USE_OPENOCD=1
 io=host
@@ -66,6 +69,6 @@ all:: model
 
 clean:: clean_model
 
-include ./model_rules.mk
+include model_rules.mk
 
 include $(GAP_SDK_HOME)/tools/rules/pmsis_rules.mk

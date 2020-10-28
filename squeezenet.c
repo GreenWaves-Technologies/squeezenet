@@ -15,8 +15,9 @@
 #endif  /* __EMUL__ */
 
 #include "squeezenet.h"
+#include "squeezenetInfo.h"
 #include "squeezenetKernels.h"
-#include "ImgIO.h"
+#include "gaplib/ImgIO.h"
 
 #define __XSTR(__s) __STR(__s)
 #define __STR(__s) #__s
@@ -59,9 +60,6 @@ L2_MEM short int *ResOut;
 typedef unsigned char IMAGE_IN_T;
 L2_MEM IMAGE_IN_T *ImageIn;
 
-#ifdef PERF
-L2_MEM rt_perf_t *cluster_perf;
-#endif
 
 static void RunNetwork()
 {
@@ -87,8 +85,7 @@ static void RunNetwork()
     }
   }
 
-  printf("Class detected: %d, with value: %f\n", max_class, max_value);
-  //FIX2FP(max_value,15);
+  printf("Class detected: %d, with value: %f\n", max_class, max_value*S39_Op_output_1_OUT_SCALE);
   printf("\n");
 }
 
