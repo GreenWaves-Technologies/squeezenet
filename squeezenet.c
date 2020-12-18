@@ -156,6 +156,7 @@ int start()
   pi_cluster_send_task_to_cl(&cluster_dev, task);
   
   __PREFIX(CNN_Destruct)();
+  pi_cluster_close(&cluster_dev);
 
 #ifdef PERF
 	unsigned int TotalCycles = 0, TotalOper = 0;
