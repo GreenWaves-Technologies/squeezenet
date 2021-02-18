@@ -126,6 +126,9 @@ int start()
   #endif
   
   __PREFIX(CNN_Destruct)();
+  #ifndef __EMUL__
+    pi_cluster_close(&cluster_dev);
+  #endif
 
   #ifdef PERF
   	unsigned int TotalCycles = 0, TotalOper = 0;
@@ -151,6 +154,19 @@ int start()
 int main(void)
 {
   return pmsis_kickoff((void *) start);
+}
+#else
+int main(int argc, char *argv[])
+{
+  if (argc < 2)
+  {
+      PRINTF("Usage: squeezenet [image_file]\n");
+      exit(-1);
+  }
+  ImageName = argv[1];
+  PRINTF("\n\n\t *** NNTOOL SQUEEZENET emul ***\n\n");
+  start();
+  return 0;
 }
 #endif
 
