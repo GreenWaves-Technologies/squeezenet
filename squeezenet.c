@@ -24,6 +24,8 @@
 #define NUM_CLASSES 1001
 
 AT_HYPERFLASH_FS_EXT_ADDR_TYPE __PREFIX(_L3_Flash) = 0;
+int max_class;
+int max_value;
 
 // Softmax always outputs Q15 short int even from 8 bit input
 L2_MEM short int *ResOut;
@@ -52,8 +54,8 @@ static void RunNetwork()
   printf("\n");
   
   //Checki Results
-  int max_class=0;
-  int max_value=0;
+  max_class=0;
+  max_value=0;
   for (int i=0;i<NUM_CLASSES;i++){
     if(ResOut[i]>max_value){
       max_value=ResOut[i];
@@ -90,6 +92,15 @@ int start()
 
     struct pi_cluster_task *task = pmsis_l2_malloc(sizeof(struct pi_cluster_task));
     memset(task, 0, sizeof(struct pi_cluster_task));
+
+    char * stack_pointer = (char *) pmsis_l1_malloc(STACK_SIZE + 7*SLAVE_STACK_SIZE);
+
+    if(task==NULL || stack_pointer==NULL) {
+      printf("pi_cluster_task alloc Error!\n");
+      pmsis_exit(-1);
+    }
+
+    task->stacks = stack_pointer;
     task->entry = &RunNetwork;
     task->stack_size = STACK_SIZE;
     task->slave_stack_size = SLAVE_STACK_SIZE;
@@ -140,6 +151,11 @@ int start()
   	printf("\n");
   	printf("%45s: Cycles: %10d, Operations: %10d, Operations/Cycle: %f\n", "Total", TotalCycles, TotalOper, ((float) TotalOper)/ TotalCycles);
   	printf("\n");
+
+    #ifdef GROUND_TRUTH
+    if (max_class != GROUND_TRUTH) {printf("Error class predicted: %d ground truth: %d\n", max_class, GROUND_TRUTH); pmsis_exit(-1);
+    else                           printf("Correct prediction\n");
+    #endif
   #endif
 
   printf("Ended\n");
@@ -153,6 +169,7 @@ int start()
 #ifndef __EMUL__
 int main(void)
 {
+  printf("\n\n\t *** NNTOOL SQUEEZENET ***\n\n");
   return pmsis_kickoff((void *) start);
 }
 #else

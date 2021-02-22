@@ -28,6 +28,7 @@ def create_parser():
 						help="path to tflite model to test")
 	parser.add_argument('-d', '--dataset_path',
 						help="path to imagenet val")
+	parser.add_argument('--single_image', default=None)
 	return parser
 
 def main():
@@ -46,6 +47,18 @@ def main():
 	input_type = input_details[0]['dtype']
 	print('Input details: ', input_details)
 	print('Output details: ', output_details)
+
+	if args.single_image:
+		img = Image.open(args.single_image)
+		img = img.resize((input_details[0]['shape'][1], input_details[0]['shape'][2]))
+		input_array = np.array(img, dtype=np.uint8)
+		input_array = np.reshape(input_array, input_details[0]['shape']).astype(input_type)/128 -1
+		interpreter.set_tensor(input_details[0]['index'], input_array)
+		interpreter.invoke()
+		output = interpreter.get_tensor(output_details[0]['index'])
+		print(f"{args.single_image} --> Predicted class: {np.argmax(output)} with confidence: {np.max(output):.2f} = {int(np.max(output)*2**15)}")
+		return
+
 
 	predictions = {}
 	TOT_COUNT = 0
