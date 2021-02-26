@@ -153,7 +153,7 @@ int start()
   	printf("\n");
 
     #ifdef GROUND_TRUTH
-    if (max_class != GROUND_TRUTH) {printf("Error class predicted: %d ground truth: %d\n", max_class, GROUND_TRUTH); pmsis_exit(-1);
+    if (max_class != GROUND_TRUTH) {printf("Error class predicted: %d ground truth: %d\n", max_class, GROUND_TRUTH); pmsis_exit(-1);}
     else                           printf("Correct prediction\n");
     #endif
   #endif
