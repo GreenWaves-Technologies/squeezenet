@@ -94,14 +94,11 @@ int start()
     struct pi_cluster_task *task = pmsis_l2_malloc(sizeof(struct pi_cluster_task));
     memset(task, 0, sizeof(struct pi_cluster_task));
 
-    char * stack_pointer = (char *) pmsis_l1_malloc(STACK_SIZE + 7*SLAVE_STACK_SIZE);
-
-    if(task==NULL || stack_pointer==NULL) {
+    if(task==NULL) {
       printf("pi_cluster_task alloc Error!\n");
       pmsis_exit(-1);
     }
 
-    task->stacks = stack_pointer;
     task->entry = &RunNetwork;
     task->stack_size = STACK_SIZE;
     task->slave_stack_size = SLAVE_STACK_SIZE;
