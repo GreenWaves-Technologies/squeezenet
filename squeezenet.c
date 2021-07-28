@@ -32,7 +32,9 @@ L2_MEM short int *ResOut;
 typedef unsigned char IMAGE_IN_T;
 char *ImageName;
 #ifdef __EMUL__
-  L2_MEM IMAGE_IN_T *S0_Input_1;
+unsigned char * __restrict__ Input_1;
+#else
+extern  unsigned char * __restrict__ Input_1;
 #endif
 
 static void RunNetwork()
@@ -45,7 +47,7 @@ static void RunNetwork()
 #endif
 
 #ifdef __EMUL__
-  __PREFIX(CNN)(S0_Input_1, ResOut);
+  __PREFIX(CNN)(Input_1, ResOut);
 #else
   __PREFIX(CNN)(ResOut);
 #endif
@@ -71,15 +73,14 @@ static void RunNetwork()
 int start()
 {
   #ifdef __EMUL__
-    S0_Input_1 = AT_L2_ALLOC(0, AT_INPUT_SIZE*sizeof(IMAGE_IN_T));
-    if (S0_Input_1==0){
+    Input_1 = AT_L2_ALLOC(0, AT_INPUT_SIZE*sizeof(IMAGE_IN_T));
+    if (Input_1==0){
       printf("error allocating %ld \n", AT_INPUT_SIZE*sizeof(IMAGE_IN_T));
       return 1;
     }
   #else
     ImageName = __XSTR(AT_IMAGE);
-    pi_freq_set(PI_FREQ_DOMAIN_CL,175000000);
-
+    pi_freq_set(PI_FREQ_DOMAIN_FC,250000000);
     struct pi_device cluster_dev;
     struct pi_cluster_conf conf;
     pi_cluster_conf_init(&conf);
@@ -89,18 +90,15 @@ int start()
           printf("Cluster open failed !\n");
           pmsis_exit(-4);
       }
-
+    pi_freq_set(PI_FREQ_DOMAIN_CL,175000000);
     struct pi_cluster_task *task = pmsis_l2_malloc(sizeof(struct pi_cluster_task));
     memset(task, 0, sizeof(struct pi_cluster_task));
 
-    char * stack_pointer = (char *) pmsis_l1_malloc(STACK_SIZE + 7*SLAVE_STACK_SIZE);
-
-    if(task==NULL || stack_pointer==NULL) {
+    if(task==NULL) {
       printf("pi_cluster_task alloc Error!\n");
       pmsis_exit(-1);
     }
 
-    task->stacks = stack_pointer;
     task->entry = &RunNetwork;
     task->stack_size = STACK_SIZE;
     task->slave_stack_size = SLAVE_STACK_SIZE;
@@ -124,7 +122,7 @@ int start()
 
   printf("Reading image\n");
   if (ReadImageFromFile(ImageName, AT_INPUT_WIDTH, AT_INPUT_HEIGHT, AT_INPUT_COLORS,
-                        S0_Input_1, AT_INPUT_SIZE*sizeof(IMAGE_IN_T), IMGIO_OUTPUT_CHAR, 0)) {
+                        Input_1, AT_INPUT_SIZE*sizeof(IMAGE_IN_T), IMGIO_OUTPUT_CHAR, 0)) {
     printf("Failed to load image %s\n", ImageName);
     return 1;
   }
