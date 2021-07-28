@@ -53,7 +53,7 @@ $(MAIN): $(OBJS)
 	$(CC) $(CFLAGS) -MMD -MP $(CFLAGS) $(INCLUDES) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
 
 clean: 
-	rm -r $(BUILD_DIR)
+	rm -rf $(BUILD_DIR)
 	$(RM) $(MAIN)
 
 clean_at_model:

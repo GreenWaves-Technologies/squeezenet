@@ -9,4 +9,6 @@ set input_norm_func "x: x"
 set l3_ram_ext_managed false
 set l2_ram_ext_managed false
 set graph_dump_tensor 7
+set graph_reorder_constant_in false
+
 save_state

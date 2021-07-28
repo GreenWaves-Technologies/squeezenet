@@ -72,4 +72,4 @@ at_model:: $(MODEL_BUILD) $(MODEL_GEN_EXE)
 
 include common/model_rules.mk
 
-include $(GAP_SDK_HOME)/tools/rules/pmsis_rules.mk
+include $(RULES_DIR)/pmsis_rules.mk
