@@ -33,8 +33,6 @@ typedef unsigned char IMAGE_IN_T;
 char *ImageName;
 #ifdef __EMUL__
 unsigned char * __restrict__ Input_1;
-#else
-extern  unsigned char * __restrict__ Input_1;
 #endif
 
 static void RunNetwork()
@@ -126,6 +124,9 @@ int start()
     printf("Failed to load image %s\n", ImageName);
     return 1;
   }
+  #ifdef IMAGE_SUB_128
+  for (int i=0; i<AT_INPUT_SIZE; i++) Input_1[i] -= 128;
+  #endif
   printf("Finished reading image\n");
 
   #ifdef __EMUL__
