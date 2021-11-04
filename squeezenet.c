@@ -152,8 +152,16 @@ int start()
   	printf("\n");
 
     #ifdef GROUND_TRUTH
-    if (max_class != GROUND_TRUTH) {printf("Error class predicted: %d ground truth: %d\n", max_class, GROUND_TRUTH); pmsis_exit(-1);}
-    else                           printf("Correct prediction\n");
+    if (max_class != GROUND_TRUTH) {
+      printf("Error class predicted: %d ground truth: %d\n", max_class, GROUND_TRUTH); pmsis_exit(-1);
+      #ifdef __EMUL__
+        return -1;
+      #else
+        pmsis_exit(-1);
+      #endif
+    }
+    else                           
+      printf("Correct prediction\n");
     #endif
   #endif
 

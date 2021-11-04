@@ -20,7 +20,6 @@ RM=rm -r
 IMAGE=$(CURDIR)/images/sample.ppm
 GROUND_TRUTH = 644 # class predicted by tflite model on sample.ppm image
 
-export GAP_USE_OPENOCD=1
 io=host
 
 #ifeq ($(ALREADY_FLASHED),)
@@ -60,11 +59,7 @@ ifeq '$(TARGET_CHIP_FAMILY)' 'GAP9'
 	MODEL_L3_MEMORY=8000000
 else
 	TOTAL_STACK_SIZE = $(shell expr $(CLUSTER_STACK_SIZE) \+ $(CLUSTER_SLAVE_STACK_SIZE) \* 7)
-	ifeq '$(TARGET_CHIP)' 'GAP8_V3'
-		FREQ_CL?=175
-	else
-		FREQ_CL?=50
-	endif
+	FREQ_CL?=175
 	FREQ_FC?=250
 	MODEL_L1_MEMORY=$(shell expr 60000 \- $(TOTAL_STACK_SIZE))
 	MODEL_L2_MEMORY?=300000
