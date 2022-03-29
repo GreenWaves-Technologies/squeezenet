@@ -1,7 +1,7 @@
 set debug true
 set input_norm_func "x: (x.astype(np.float) - 128)/128"
 fusions --scale8
-aquant -s SQ8 images/sample.ppm --hwc
+aquant -s SQ8 images/sample.ppm --hwc -H 224 -W 224
 adjust
 
 nodeoption input_1 EXTERN_INPUT_POINTER 1
