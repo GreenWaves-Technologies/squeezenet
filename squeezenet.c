@@ -82,6 +82,7 @@ int start()
     struct pi_device cluster_dev;
     struct pi_cluster_conf conf;
     pi_cluster_conf_init(&conf);
+    conf.cc_stack_size = STACK_SIZE;
     pi_open_from_conf(&cluster_dev, (void *)&conf);
     if (pi_cluster_open(&cluster_dev))
       {
@@ -90,17 +91,14 @@ int start()
       }
     pi_freq_set(PI_FREQ_DOMAIN_CL,175000000);
     struct pi_cluster_task *task = pmsis_l2_malloc(sizeof(struct pi_cluster_task));
-    memset(task, 0, sizeof(struct pi_cluster_task));
 
     if(task==NULL) {
       printf("pi_cluster_task alloc Error!\n");
       pmsis_exit(-1);
     }
 
-    task->entry = &RunNetwork;
-    task->stack_size = STACK_SIZE;
-    task->slave_stack_size = SLAVE_STACK_SIZE;
-    task->arg = NULL;
+    pi_cluster_task(task, (void (*)(void *))&RunNetwork, NULL);
+    pi_cluster_task_stacks(task, NULL, SLAVE_STACK_SIZE);
     printf("Stack sizes: %d %d\n", STACK_SIZE, SLAVE_STACK_SIZE);
   #endif
 
