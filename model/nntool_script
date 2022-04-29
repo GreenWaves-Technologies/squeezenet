@@ -5,6 +5,12 @@ set input_norm_func "x: (x.astype(np.float) - 128)/128"
 aquant -s SQ8 images/sample.ppm -T -H 224 -W 224
 imageformat input_1 rgb888 offset_int8
 set input_norm_func "x: x"
+
+# RAM/FLASH Settings
+set l3_ram_device $(MODEL_L3_RAM)
+set l3_flash_device $(MODEL_L3_FLASH)
+set graph_const_exec_from_flash true
+
 nodeoption input_1 EXTERN_INPUT_POINTER 1
 nodeoption 4 PARALLELFEATURES 0
 set graph_produce_node_names true
