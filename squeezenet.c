@@ -86,20 +86,31 @@ int start()
     pi_cluster_conf_init(&conf);
     conf.cc_stack_size = STACK_SIZE;
     pi_open_from_conf(&cluster_dev, (void *)&conf);
-    if (pi_cluster_open(&cluster_dev))
-      {
-          printf("Cluster open failed !\n");
-          pmsis_exit(-4);
-      }
-    pi_freq_set(PI_FREQ_DOMAIN_FC, FREQ_FC);
-    pi_freq_set(PI_FREQ_DOMAIN_CL, FREQ_CL);
-    pi_freq_set(PI_FREQ_DOMAIN_PERIPH, FREQ_FC);
+    pi_cluster_open(&cluster_dev);
+
+    pi_freq_set(PI_FREQ_DOMAIN_FC, FREQ_FC*1000*1000);
+    pi_freq_set(PI_FREQ_DOMAIN_CL, FREQ_CL*1000*1000);
+    pi_freq_set(PI_FREQ_DOMAIN_PERIPH, FREQ_PE*1000*1000);
     printf("Set FC Frequency = %d MHz, CL Frequency = %d MHz, PERIIPH Frequency = %d MHz\n",
         pi_freq_get(PI_FREQ_DOMAIN_FC), pi_freq_get(PI_FREQ_DOMAIN_CL), pi_freq_get(PI_FREQ_DOMAIN_PERIPH));
+    #ifdef VOLTAGE
+    pi_pmu_voltage_set(PI_PMU_VOLTAGE_DOMAIN_CHIP, VOLTAGE);
+    pi_pmu_voltage_set(PI_PMU_VOLTAGE_DOMAIN_CHIP, VOLTAGE);
+    printf("Voltage: %dmV\n", VOLTAGE);
+    #endif
 
-    struct pi_cluster_task task;
-    pi_cluster_task(&task, (void (*)(void *))&RunNetwork, NULL);
-    pi_cluster_task_stacks(&task, NULL, SLAVE_STACK_SIZE);
+    struct pi_cluster_task *task = pmsis_l2_malloc(sizeof(struct pi_cluster_task));
+    if(task==NULL) {
+      printf("pi_cluster_task alloc Error!\n");
+      pmsis_exit(-1);
+    }
+    pi_cluster_task(task, (void (*)(void *))&RunNetwork, NULL);
+    pi_cluster_task_stacks(task, NULL, SLAVE_STACK_SIZE);
+    #if defined(__GAP8__)
+    task->entry = &RunNetwork;
+    task->stack_size = STACK_SIZE;
+    task->slave_stack_size = SLAVE_STACK_SIZE;
+    #endif
     printf("Stack sizes: %d %d\n", STACK_SIZE, SLAVE_STACK_SIZE);
   #endif
 
@@ -131,7 +142,7 @@ int start()
   #ifdef __EMUL__
     RunNetwork();
   #else
-    pi_cluster_send_task_to_cl(&cluster_dev, &task);
+    pi_cluster_send_task_to_cl(&cluster_dev, task);
   #endif
   
   __PREFIX(CNN_Destruct)();
