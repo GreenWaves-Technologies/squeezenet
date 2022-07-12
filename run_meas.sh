@@ -9,14 +9,20 @@ AT_LOG_CHECK=${GAP_SDK_HOME}/nn_menu/power_meas_utils/check_at_model.py
 OUT_LOG_CHECK=${GAP_SDK_HOME}/nn_menu/power_meas_utils/check_run.py
 PICO_MEAS_SCRIPT=${GAP_SDK_HOME}/nn_menu/power_meas_utils/ps4444Measure.py
 LOG_TO_CSV=${GAP_SDK_HOME}/nn_menu/power_meas_utils/log_to_csv.py
-MODEL_NAME="SqueezeNet-224"
 
 ##########################################
-MODES=('CHW' 'NE16' 'HWC')
+#MODES=('CHW' 'NE16' 'HWC' 'FP16_CHW' 'FP16_HWC')
+MODES=('HWC' 'FP16_CHW' 'FP16_HWC')
 
 export RAM_TYPE="OSPI"
 export FLASH_TYPE="OSPI"
 export PMSIS_OS=pulpos
+
+set -e
+python ${GAP_SDK_HOME}/nn_menu/power_meas_utils/check_pico.py
+set +e
+
+MODEL_NAME="SqueezeNet-224"
 for MODE in "${MODES[@]}"
 do
 	case $MODE in
@@ -83,39 +89,33 @@ do
 
 		# generate the model
 		echo "$LOG_EXT"
-		touch BUILD_MODEL_SQ8BIT/*
-		touch BUILD_MODEL_NE16/*
-		touch BUILD_MODEL_FP16/*
 		touch squeezenet.c
+
 
 		echo "Running mode $MODE: GPIO_MEAS=1 MODEL_NE16=$MODEL_NE16 MODEL_FP16=$MODEL_FP16 MODEL_HWC=$MODEL_HWC RAM_TYPE=$RAM_TYPE FLASH_TYPE=$FLASH_TYPE $DVFS_FLAGS"
 		# compile and run on board
-		touch squeezenet.c & make build -j GPIO_MEAS=1 MODEL_NE16=$MODEL_NE16 MODEL_FP16=$MODEL_FP16 MODEL_HWC=$MODEL_HWC RAM_TYPE=$RAM_TYPE FLASH_TYPE=$FLASH_TYPE
+		make build -j GPIO_MEAS=1 MODEL_NE16=$MODEL_NE16 MODEL_FP16=$MODEL_FP16 MODEL_HWC=$MODEL_HWC RAM_TYPE=$RAM_TYPE FLASH_TYPE=$FLASH_TYPE
 		python3 $PICO_MEAS_SCRIPT $LOGDIR/power\_${LOG_EXT} & 
 		make run GPIO_MEAS=1 MODEL_NE16=$MODEL_NE16 MODEL_FP16=$MODEL_FP16 MODEL_HWC=$MODEL_HWC RAM_TYPE=$RAM_TYPE FLASH_TYPE=$FLASH_TYPE \
 				> $LOGDIR/output\_board\_log\_${LOG_EXT}.txt
 
-		# # check if any error in the grph constructor
-		# python3 $OUT_LOG_CHECK $LOGDIR/output\_board\_log\_${LOG_EXT}.txt
-		# if [ $? -eq "1" ]; then # kill the measurement job
-		# 	for job in `jobs -p`
-		# 	do
-		# 		echo $job
-		# 	    kill -9 $job
-		# 	done
-		# 	continue
-		# else # wait measurment job
-		# 	for job in `jobs -p`
-		# 	do
-		# 		echo $job
-		# 	    wait $job
-		# 	done
-		# fi
+		# check if any error in the grph constructor
+		python3 $OUT_LOG_CHECK $LOGDIR/output\_board\_log\_${LOG_EXT}.txt
+		if [ $? -eq "1" ]; then # kill the measurement job
+			for job in `jobs -p`
+			do
+				echo $job
+			    kill -9 $job
+			done
+			continue
+		else # wait measurment job
+			for job in `jobs -p`
+			do
+				echo $job
+			    wait $job
+			done
+		fi
 
 		python3 $LOG_TO_CSV $LOGDIR/power\_${LOG_EXT}.csv $LOGDIR/atmodel\_${MODEL_EXT}.txt $LOGDIR/log\_res.csv
-
-		#rm $LOGDIR/power\_${LOG_EXT}.csv
-		#rm $LOGDIR/output\_board\_log\_${LOG_EXT}.txt
 	done
-	#rm $LOGDIR/atmodel\_${MODEL_EXT}.txt
 done

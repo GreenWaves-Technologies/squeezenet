@@ -9,12 +9,6 @@ ifndef GAP_SDK_HOME
 endif
 
 APP=squeezenet
-MODEL_PREFIX = squeezenet
-MODEL_SQ8=1
-AT_INPUT_WIDTH=224
-AT_INPUT_HEIGHT=224
-AT_INPUT_COLORS=3
-RM=rm -r
 
 FLASH_TYPE ?= HYPER
 RAM_TYPE   ?= HYPER
@@ -49,52 +43,7 @@ GROUND_TRUTH = 644 # class predicted by tflite model on sample.ppm image
 
 io=host
 
-#ifeq ($(ALREADY_FLASHED),)
-        # this is for the board
-READFS_FILES=$(realpath $(MODEL_TENSORS))
-PLPBRIDGE_FLAGS = -f
-#endif
-
-MODEL_HWC?=0
-QUANT_BITS=8
-BUILD_DIR=BUILD
-
-TRAINED_TFLITE_MODEL = model/squeezenet.tflite
-ifeq ($(MODEL_NE16), 1)
-	NNTOOL_SCRIPT=model/nntool_script_ne16
-	MODEL_SUFFIX = _NE16
-else
-ifeq ($(MODEL_HWC), 1)
-	NNTOOL_SCRIPT=model/nntool_script_hwc
-	MODEL_SUFFIX = _HWC_SQ8
-	APP_CFLAGS += -DIMAGE_SUB_128
-else
-	NNTOOL_SCRIPT=model/nntool_script
-	MODEL_SUFFIX = _SQ8
-endif
-endif
-
-CLUSTER_STACK_SIZE=6096
-CLUSTER_SLAVE_STACK_SIZE=1024
-TOTAL_STACK_SIZE=$(shell expr $(CLUSTER_STACK_SIZE) \+ $(CLUSTER_SLAVE_STACK_SIZE) \* 7)
-ifeq '$(TARGET_CHIP_FAMILY)' 'GAP9'
-	TOTAL_STACK_SIZE = $(shell expr $(CLUSTER_STACK_SIZE) \+ $(CLUSTER_SLAVE_STACK_SIZE) \* 8)
-	FREQ_CL?=50
-	FREQ_FC?=50
-	FREQ_PE?=50
-	MODEL_L1_MEMORY=$(shell expr 128000 \- $(TOTAL_STACK_SIZE))
-	MODEL_L2_MEMORY=1450000
-	MODEL_L3_MEMORY=8000000
-else
-	TOTAL_STACK_SIZE = $(shell expr $(CLUSTER_STACK_SIZE) \+ $(CLUSTER_SLAVE_STACK_SIZE) \* 7)
-	FREQ_CL?=50
-	FREQ_FC?=50
-	FREQ_PE?=50
-	MODEL_L1_MEMORY=$(shell expr 64000 \- $(TOTAL_STACK_SIZE))
-	MODEL_L2_MEMORY?=350000
-	MODEL_L3_MEMORY=8000000
-endif
-
+include common.mk
 MODEL_SIZE_CFLAGS = -DAT_INPUT_HEIGHT=$(AT_INPUT_HEIGHT) -DAT_INPUT_WIDTH=$(AT_INPUT_WIDTH) -DAT_INPUT_COLORS=$(AT_INPUT_COLORS)
 
 include common/model_decl.mk
@@ -117,6 +66,9 @@ ifeq '$(PMSIS_OS)' 'pulpos'
 	APP_CFLAGS += -DVOLTAGE=$(VOLTAGE)
 endif
 endif
+
+READFS_FILES=$(realpath $(MODEL_TENSORS))
+PLPBRIDGE_FLAGS = -f
 
 # all depends on the model
 all:: model
