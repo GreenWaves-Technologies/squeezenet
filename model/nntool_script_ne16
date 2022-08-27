@@ -1,6 +1,7 @@
 set debug true
 set input_norm_func "x: (x.astype(np.float) - 128)/128"
-aquant -s SQ8 images/sample.ppm --use_ne16 -H 224 -W 224
+#aquant -s SQ8 images/sample.ppm --use_ne16 -H 224 -W 224
+aquant --stats $(STATS_DICT) --use_ne16 --hwc
 qtune --step 3:5 hwc=True use_ne16=False
 adjust
 fusions --scale8

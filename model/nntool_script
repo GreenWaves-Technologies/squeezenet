@@ -1,8 +1,9 @@
 set debug true
+aquant --stats $(STATS_DICT)
 adjust
 fusions --scale8
 set input_norm_func "x: (x.astype(np.float) - 128)/128"
-aquant -s SQ8 images/sample.ppm -T -H 224 -W 224
+#aquant -s SQ8 images/sample.ppm -T -H 224 -W 224
 imageformat input_1 rgb888 offset_int8
 set input_norm_func "x: x"
 

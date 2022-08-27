@@ -1,7 +1,8 @@
 set debug true
+aquant --stats $(STATS_DICT) --hwc
 set input_norm_func "x: (x.astype(np.float) - 128)/128"
 fusions --scale8
-aquant -s SQ8 images/sample.ppm --hwc -H 224 -W 224
+#aquant -s SQ8 images/sample.ppm --hwc -H 224 -W 224
 adjust
 
 # RAM/FLASH Settings
