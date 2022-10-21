@@ -39,6 +39,16 @@ ifeq '$(PMSIS_OS)' 'pulpos'
 endif
 endif
 
+USE_PRIVILEGED_FLASH?=0
+ifeq ($(USE_PRIVILEGED_FLASH), 1)
+MODEL_SEC_L3_FLASH=AT_MEM_L3_MRAMFLASH
+else
+MODEL_SEC_L3_FLASH=
+endif
+ifneq ($(MODEL_SEC_L3_FLASH), )
+  runner_args += --flash-property=$(CURDIR)/$(MODEL_SEC_TENSORS)@mram:readfs:files
+endif
+
 READFS_FILES=$(realpath $(MODEL_TENSORS))
 PLPBRIDGE_FLAGS = -f
 

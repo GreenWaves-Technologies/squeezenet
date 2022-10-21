@@ -24,6 +24,7 @@
 #define NUM_CLASSES 1001
 
 AT_HYPERFLASH_FS_EXT_ADDR_TYPE __PREFIX(_L3_Flash) = 0;
+AT_HYPERFLASH_FS_EXT_ADDR_TYPE __PREFIX(_L3_PrivilegedFlash) = 0;
 int max_class;
 int max_value;
 
