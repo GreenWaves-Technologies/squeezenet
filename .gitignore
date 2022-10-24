@@ -1,1 +1,5 @@
 BUILD*
+logs
+__pycache__
+quant_data_ppm
+log_*

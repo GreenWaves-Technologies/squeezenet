@@ -24,6 +24,7 @@
 #define NUM_CLASSES 1001
 
 AT_HYPERFLASH_FS_EXT_ADDR_TYPE __PREFIX(_L3_Flash) = 0;
+AT_HYPERFLASH_FS_EXT_ADDR_TYPE __PREFIX(_L3_PrivilegedFlash) = 0;
 int max_class;
 int max_value;
 
@@ -33,8 +34,6 @@ typedef unsigned char IMAGE_IN_T;
 char *ImageName;
 #ifdef __EMUL__
 unsigned char * __restrict__ Input_1;
-#else
-extern  unsigned char * __restrict__ Input_1;
 #endif
 
 static void RunNetwork()
@@ -49,7 +48,9 @@ static void RunNetwork()
 #ifdef __EMUL__
   __PREFIX(CNN)(Input_1, ResOut);
 #else
+    GPIO_HIGH();
   __PREFIX(CNN)(ResOut);
+    GPIO_LOW();
 #endif
   printf("Runner completed\n");
 
@@ -79,30 +80,38 @@ int start()
       return 1;
     }
   #else
+    OPEN_GPIO_MEAS();
     ImageName = __XSTR(AT_IMAGE);
-    pi_freq_set(PI_FREQ_DOMAIN_FC,250000000);
     struct pi_device cluster_dev;
     struct pi_cluster_conf conf;
     pi_cluster_conf_init(&conf);
+    conf.cc_stack_size = STACK_SIZE;
     pi_open_from_conf(&cluster_dev, (void *)&conf);
-    if (pi_cluster_open(&cluster_dev))
-      {
-          printf("Cluster open failed !\n");
-          pmsis_exit(-4);
-      }
-    pi_freq_set(PI_FREQ_DOMAIN_CL,175000000);
-    struct pi_cluster_task *task = pmsis_l2_malloc(sizeof(struct pi_cluster_task));
-    memset(task, 0, sizeof(struct pi_cluster_task));
+    pi_cluster_open(&cluster_dev);
 
+    pi_freq_set(PI_FREQ_DOMAIN_FC, FREQ_FC*1000*1000);
+    pi_freq_set(PI_FREQ_DOMAIN_CL, FREQ_CL*1000*1000);
+    pi_freq_set(PI_FREQ_DOMAIN_PERIPH, FREQ_PE*1000*1000);
+    printf("Set FC Frequency = %d MHz, CL Frequency = %d MHz, PERIIPH Frequency = %d MHz\n",
+        pi_freq_get(PI_FREQ_DOMAIN_FC), pi_freq_get(PI_FREQ_DOMAIN_CL), pi_freq_get(PI_FREQ_DOMAIN_PERIPH));
+    #ifdef VOLTAGE
+    pi_pmu_voltage_set(PI_PMU_VOLTAGE_DOMAIN_CHIP, VOLTAGE);
+    pi_pmu_voltage_set(PI_PMU_VOLTAGE_DOMAIN_CHIP, VOLTAGE);
+    printf("Voltage: %dmV\n", VOLTAGE);
+    #endif
+
+    struct pi_cluster_task *task = pi_l2_malloc(sizeof(struct pi_cluster_task));
     if(task==NULL) {
       printf("pi_cluster_task alloc Error!\n");
       pmsis_exit(-1);
     }
-
+    pi_cluster_task(task, (void (*)(void *))&RunNetwork, NULL);
+    pi_cluster_task_stacks(task, NULL, SLAVE_STACK_SIZE);
+    #if defined(__GAP8__)
     task->entry = &RunNetwork;
     task->stack_size = STACK_SIZE;
     task->slave_stack_size = SLAVE_STACK_SIZE;
-    task->arg = NULL;
+    #endif
     printf("Stack sizes: %d %d\n", STACK_SIZE, SLAVE_STACK_SIZE);
   #endif
 
@@ -126,6 +135,9 @@ int start()
     printf("Failed to load image %s\n", ImageName);
     return 1;
   }
+  #ifdef IMAGE_SUB_128
+  for (int i=0; i<AT_INPUT_SIZE; i++) Input_1[i] -= 128;
+  #endif
   printf("Finished reading image\n");
 
   #ifdef __EMUL__
@@ -139,21 +151,33 @@ int start()
     pi_cluster_close(&cluster_dev);
   #endif
 
-  #ifdef PERF
-  	unsigned int TotalCycles = 0, TotalOper = 0;
-  	printf("\n");
-  	for (int i=0; i<(sizeof(AT_GraphPerf)/sizeof(unsigned int)); i++) {
-  		printf("%45s: Cycles: %10d, Operations: %10d, Operations/Cycle: %f\n", AT_GraphNodeNames[i], AT_GraphPerf[i], AT_GraphOperInfosNames[i], ((float) AT_GraphOperInfosNames[i])/ AT_GraphPerf[i]);
-  		TotalCycles += AT_GraphPerf[i]; TotalOper += AT_GraphOperInfosNames[i];
-  	}
-  	printf("\n");
-  	printf("%45s: Cycles: %10d, Operations: %10d, Operations/Cycle: %f\n", "Total", TotalCycles, TotalOper, ((float) TotalOper)/ TotalCycles);
-  	printf("\n");
+#ifdef PERF
+    {
+      unsigned int TotalCycles = 0, TotalOper = 0;
+      printf("\n");
+      for (unsigned int i=0; i<(sizeof(AT_GraphPerf)/sizeof(unsigned int)); i++) {
+        TotalCycles += AT_GraphPerf[i]; TotalOper += AT_GraphOperInfosNames[i];
+      }
+      for (unsigned int i=0; i<(sizeof(AT_GraphPerf)/sizeof(unsigned int)); i++) {
+        printf("%45s: Cycles: %12u, Cyc%%: %5.1f%%, Operations: %12u, Op%%: %5.1f%%, Operations/Cycle: %f\n", AT_GraphNodeNames[i], AT_GraphPerf[i], 100*((float) (AT_GraphPerf[i]) / TotalCycles), AT_GraphOperInfosNames[i], 100*((float) (AT_GraphOperInfosNames[i]) / TotalOper), ((float) AT_GraphOperInfosNames[i])/ AT_GraphPerf[i]);
+      }
+      printf("\n");
+      printf("%45s: Cycles: %12u, Cyc%%: 100.0%%, Operations: %12u, Op%%: 100.0%%, Operations/Cycle: %f\n", "Total", TotalCycles, TotalOper, ((float) TotalOper)/ TotalCycles);
+      printf("\n");
+    }
+#endif
 
-    #ifdef GROUND_TRUTH
-    if (max_class != GROUND_TRUTH) {printf("Error class predicted: %d ground truth: %d\n", max_class, GROUND_TRUTH); pmsis_exit(-1);}
-    else                           printf("Correct prediction\n");
+  #ifdef GROUND_TRUTH
+  if (max_class != GROUND_TRUTH) {
+    printf("Error class predicted: %d ground truth: %d\n", max_class, GROUND_TRUTH); pmsis_exit(-1);
+    #ifdef __EMUL__
+      return -1;
+    #else
+      pmsis_exit(-1);
     #endif
+  }
+  else                           
+    printf("Correct prediction\n");
   #endif
 
   printf("Ended\n");

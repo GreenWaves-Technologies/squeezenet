@@ -22,7 +22,7 @@ ORDERED_SYNSET = ["", "n01440764", "n01443537", "n01484850", "n01491361", "n0149
 
 def create_parser():
 	# create the top-level parser
-	parser = argparse.ArgumentParser(prog='h5_to_tflite')
+	parser = argparse.ArgumentParser(prog='tflite_evaluation')
 
 	parser.add_argument('-t', '--tflite_model',
 						help="path to tflite model to test")

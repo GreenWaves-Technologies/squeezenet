@@ -1,0 +1,93 @@
+MODEL_PREFIX = squeezenet
+MODEL_SQ8=1
+AT_INPUT_WIDTH=224
+AT_INPUT_HEIGHT=224
+AT_INPUT_COLORS=3
+RM=rm -r
+
+MODEL_HWC?=0
+BUILD_DIR=BUILD
+
+TRAINED_MODEL = model/squeezenet.tflite
+ifeq ($(MODEL_NE16), 1)
+	NNTOOL_SCRIPT=model/nntool_script_ne16
+	MODEL_SUFFIX = _NE16
+else
+ifeq ($(MODEL_HWC), 1)
+	NNTOOL_SCRIPT=model/nntool_script_hwc
+	MODEL_SUFFIX = _HWC_SQ8
+	APP_CFLAGS += -DIMAGE_SUB_128
+else
+	NNTOOL_SCRIPT=model/nntool_script
+	MODEL_SUFFIX = _SQ8
+endif
+endif
+
+STATS_DICT = model/squeezenet_astats.pickle
+QUANT_DATASET = $(CURDIR)/quant_data_ppm
+$(QUANT_DATASET):
+	./download_quant_data.sh
+
+$(STATS_DICT): | $(QUANT_DATASET)
+	python model/collect_statistics.py $(TRAINED_MODEL) --stats_path $(STATS_DICT)
+
+stats: $(STATS_DICT)
+
+clean_stats:
+	rm -rf $(STATS_DICT)
+
+# Options for the memory settings: will require
+# set l3_flash_device $(MODEL_L3_FLASH)
+# set l3_ram_device $(MODEL_L3_RAM)
+# in the nntool_script
+# FLASH and RAM type
+FLASH_TYPE = DEFAULT
+RAM_TYPE   = DEFAULT
+
+ifeq '$(FLASH_TYPE)' 'HYPER'
+    MODEL_L3_FLASH=AT_MEM_L3_HFLASH
+else ifeq '$(FLASH_TYPE)' 'MRAM'
+    MODEL_L3_FLASH=AT_MEM_L3_MRAMFLASH
+    READFS_FLASH = target/chip/soc/mram
+else ifeq '$(FLASH_TYPE)' 'QSPI'
+    MODEL_L3_FLASH=AT_MEM_L3_QSPIFLASH
+    READFS_FLASH = target/board/devices/spiflash
+else ifeq '$(FLASH_TYPE)' 'OSPI'
+    MODEL_L3_FLASH=AT_MEM_L3_OSPIFLASH
+else ifeq '$(FLASH_TYPE)' 'DEFAULT'
+    MODEL_L3_FLASH=AT_MEM_L3_DEFAULTFLASH
+endif
+
+ifeq '$(RAM_TYPE)' 'HYPER'
+    MODEL_L3_RAM=AT_MEM_L3_HRAM
+else ifeq '$(RAM_TYPE)' 'QSPI'
+    MODEL_L3_RAM=AT_MEM_L3_QSPIRAM
+else ifeq '$(RAM_TYPE)' 'OSPI'
+    MODEL_L3_RAM=AT_MEM_L3_OSPIRAM
+else ifeq '$(RAM_TYPE)' 'DEFAULT'
+    MODEL_L3_RAM=AT_MEM_L3_DEFAULTRAM
+endif
+
+TOTAL_STACK_SIZE=$(shell expr $(CLUSTER_STACK_SIZE) \+ $(CLUSTER_SLAVE_STACK_SIZE) \* 7)
+ifeq '$(TARGET_CHIP_FAMILY)' 'GAP9'
+	CLUSTER_STACK_SIZE=2048
+	CLUSTER_SLAVE_STACK_SIZE=512
+	TOTAL_STACK_SIZE = $(shell expr $(CLUSTER_STACK_SIZE) \+ $(CLUSTER_SLAVE_STACK_SIZE) \* 8)
+	FREQ_CL?=50
+	FREQ_FC?=50
+	FREQ_PE?=50
+	MODEL_L1_MEMORY=$(shell expr 128000 \- $(TOTAL_STACK_SIZE))
+	MODEL_L2_MEMORY=1450000
+	MODEL_L3_MEMORY=8000000
+else
+	CLUSTER_STACK_SIZE=6096
+	CLUSTER_SLAVE_STACK_SIZE=1024
+	TOTAL_STACK_SIZE = $(shell expr $(CLUSTER_STACK_SIZE) \+ $(CLUSTER_SLAVE_STACK_SIZE) \* 7)
+	FREQ_CL?=50
+	FREQ_FC?=50
+	FREQ_PE?=50
+	MODEL_L1_MEMORY=$(shell expr 64000 \- $(TOTAL_STACK_SIZE))
+	MODEL_L2_MEMORY?=350000
+	MODEL_L3_MEMORY=8000000
+endif
+MODEL_SIZE_CFLAGS = -DAT_INPUT_HEIGHT=$(AT_INPUT_HEIGHT) -DAT_INPUT_WIDTH=$(AT_INPUT_WIDTH) -DAT_INPUT_COLORS=$(AT_INPUT_COLORS)
