@@ -1,4 +1,5 @@
 name: squeezenet
+builder: cmake
 boards: []
 platforms: 
     - board
@@ -11,9 +12,16 @@ chips:
     - gap9
 variants:
     std:
-        name: standard
+        name: chw
         tags:
             - integration
             - release
         duration: standard
-        flags: ~
+        flags: CONFIG_MODEL_SQ8=y PERF_CI=165000000
+    # ne16:
+    #     name: ne16
+    #     tags:
+    #         - integration
+    #         - release
+    #     duration: standard
+    #     flags: CONFIG_MODEL_NE16=y PERF_CI=35000000

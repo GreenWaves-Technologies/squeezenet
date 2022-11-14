@@ -139,6 +139,9 @@ int start()
   for (int i=0; i<AT_INPUT_SIZE; i++) Input_1[i] -= 128;
   #endif
   printf("Finished reading image\n");
+  int input_checksum = 0;
+  for (int i=0; i<AT_INPUT_SIZE; i++) input_checksum += Input_1[i];
+  printf("input_checksum: %d\n", input_checksum);
 
   #ifdef __EMUL__
     RunNetwork();
@@ -152,8 +155,8 @@ int start()
   #endif
 
 #ifdef PERF
+    unsigned int TotalCycles = 0, TotalOper = 0;
     {
-      unsigned int TotalCycles = 0, TotalOper = 0;
       printf("\n");
       for (unsigned int i=0; i<(sizeof(AT_GraphPerf)/sizeof(unsigned int)); i++) {
         TotalCycles += AT_GraphPerf[i]; TotalOper += AT_GraphOperInfosNames[i];
@@ -179,13 +182,19 @@ int start()
   else                           
     printf("Correct prediction\n");
   #endif
+  #if defined(PERF_CI) && defined(PERF)
+  if (TotalCycles > PERF_CI) {
+      printf("Error in CI for performance: we expected to be faster: %d > %d\n", TotalCycles, PERF_CI);
+      pmsis_exit(-1);
+  }
+  printf("Performance Regression passed\n");
+  #endif
 
   printf("Ended\n");
-  #ifdef __EMUL__
-    return 0;
-  #else
+  #ifndef __EMUL__
     pmsis_exit(0);
   #endif
+  return 0;
 }
 
 #ifndef __EMUL__
