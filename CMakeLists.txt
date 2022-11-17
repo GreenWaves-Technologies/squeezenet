@@ -31,6 +31,7 @@ cmake_minimum_required(VERSION 3.16)
 # Application related definitions
 ###############################################################################
 
+
 set(TARGET_NAME         "squeezenet")
 set(MAIN                squeezenet.c)
 
@@ -40,24 +41,25 @@ set(MAIN                squeezenet.c)
 
 include($ENV{GAP_SDK_HOME}/utils/cmake/setup.cmake)
 setup_cmake()
+set(APP_MSG_PREFIX "[${BoldRed}${TARGET_NAME}${ColourReset}]")
 
 ###############################################################################
 # Application's kconfig options
 ###############################################################################
 
 if(DEFINED CONFIG_MODEL_SQ8_HWC)
-    message(STATUS ">> Building SQ8 HWC SqueezeNet model <<")
+    message(STATUS "${APP_MSG_PREFIX} >> Building SQ8 HWC SqueezeNet model <<")
     set(CONFIG_NNTOOL_SCRIPT_PATH model/nntool_script_hwc)
     set(MODEL_SUFFIX _sq8)
     list(APPEND TARGET_PREPROCESSOR -DIMAGE_SUB_128)
 
 elseif(DEFINED CONFIG_MODEL_SQ8)
-    message(STATUS ">> Building SQ8 SqueezeNet model <<")
+    message(STATUS "${APP_MSG_PREFIX} >> Building SQ8 SqueezeNet model <<")
     set(CONFIG_NNTOOL_SCRIPT_PATH model/nntool_script)
     set(MODEL_SUFFIX _sq8)
 
 elseif(DEFINED CONFIG_MODEL_NE16)
-    message(STATUS ">> Building NE16 SqueezeNet model <<")
+    message(STATUS "${APP_MSG_PREFIX} >> Building NE16 SqueezeNet model <<")
     set(CONFIG_NNTOOL_SCRIPT_PATH model/nntool_script_ne16)
     set(MODEL_SUFFIX _ne16)
     list(APPEND TARGET_PREPROCESSOR -DIMAGE_SUB_128)

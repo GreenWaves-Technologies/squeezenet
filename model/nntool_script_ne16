@@ -2,6 +2,7 @@ set debug true
 set input_norm_func "x: 0.00787402*(x.astype(np.float)-128)"
 #aquant -s SQ8 images/sample.ppm --use_ne16 -H 224 -W 224
 aquant --stats $(STATS_DICT) --use_ne16 --hwc
+#qtune --step 3:5 hwc=True use_ne16_im2col=True
 qtune --step 3:5 hwc=True use_ne16=False
 adjust
 fusions --scale8
@@ -17,6 +18,7 @@ set graph_produce_operinfos true
 set graph_monitor_cycles true
 #set graph_checksum 1
 #set graph_dump_tensor 7
+#set graph_dump_one_node S83_Conv2d_256x64x3x3_Relu
 #set graph_dump_one_node S3_Conv2d_96x7x7x3_MaxPool_3x3_Relu
 #set graph_trace_exec true
 save_state

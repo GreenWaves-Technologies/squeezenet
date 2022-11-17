@@ -29,11 +29,11 @@ def main():
 
 	G = NNGraph.load_graph(args.model_path)
 	# to CHW
-	G.adjust_order()
+	#G.adjust_order()
 
 	stats_collector = ActivationRangesCollector()
 	for image in tqdm(glob(args.quant_images)):
-		input_tensor = np.array(Image.open(image).convert(mode="RGB").resize((224, 224))).transpose(2, 0, 1)
+		input_tensor = np.array(Image.open(image).convert(mode="RGB").resize((224, 224))) #.transpose(2, 0, 1)
 		input_tensor = preprocess(input_tensor)
 		stats_collector.collect_stats(G, [input_tensor])
 

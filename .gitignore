@@ -4,3 +4,4 @@ __pycache__
 quant_data_ppm
 log_*
 build
+report.xml
