@@ -31,7 +31,6 @@ cmake_minimum_required(VERSION 3.16)
 # Application related definitions
 ###############################################################################
 
-
 set(TARGET_NAME         "squeezenet")
 set(MAIN                squeezenet.c)
 

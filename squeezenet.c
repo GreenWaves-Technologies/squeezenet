@@ -201,7 +201,7 @@ int start()
 int main(void)
 {
   printf("\n\n\t *** NNTOOL SQUEEZENET ***\n\n");
-  return pmsis_kickoff((void *) start);
+  return start();
 }
 #else
 int main(int argc, char *argv[])
