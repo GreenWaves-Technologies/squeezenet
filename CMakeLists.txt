@@ -40,7 +40,6 @@ set(MAIN                squeezenet.c)
 ###############################################################################
 
 include($ENV{GAP_SDK_HOME}/utils/cmake/setup.cmake)
-setup_cmake()
 set(APP_MSG_PREFIX "[${BoldRed}${TARGET_NAME}${ColourReset}]")
 
 ###############################################################################
