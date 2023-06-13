@@ -1,27 +1,93 @@
 name: squeezenet
-builder: cmake
-boards: []
-platforms: 
-    - board
-    - gvsoc
-os: 
-    - freertos
-    - pulpos
-chips: 
-    - gap8
-    - gap9
 variants:
-    std:
-        name: chw
-        tags:
-            - integration
-            - release
-        duration: standard
-        flags: CONFIG_MODEL_SQ8=y PERF_CI=165000000
-    ne16:
-        name: ne16
-        tags:
-            - integration
-            - release
-        duration: standard
-        flags: CONFIG_MODEL_NE16=y PERF_CI=38000000
+    chw_gvsoc:
+        chip: gap9
+        board: gap9evk
+        platform: gvsoc
+        os: freertos
+        builder: cmake
+        flags:
+            - CONFIG_MODEL_SQ8=y
+            - PERF_CI=165000000
+            - CONFIG_MODEL_NE16=y
+            - CONFIG_MODEL_L2_MEMORY=1300000
+            - CONFIG_MODEL_LOGLEVEL=1
+            - CONFIG_ENABLE_NNTOOL=y
+            - CONFIG_BOARD_GAP9MOD_V1_0_B=y
+            - CONFIG_BOARD_GAP9EVK_V1_3=y
+            - CONFIG_LIB_GAP_LIB=y
+            - CONFIG_LIB_GAP_LIB_IMG_IO=y
+            - CONFIG_DRIVER_READFS=y
+            - CONFIG_DRIVER_HOSTFS=y
+            - CONFIG_DRIVER_TYPE_FLASH=y
+            - CONFIG_DRIVER_TYPE_RAM=y
+            - CONFIG_CL_SLAVE_CORE_STACK_SIZE=512
+
+    ne16_gvsoc:
+        chip: gap9
+        board: gap9evk
+        platform: gvsoc
+        os: freertos
+        builder: cmake
+        flags:
+            - CONFIG_MODEL_NE16=y
+            - PERF_CI=38000000
+            - CONFIG_MODEL_NE16=y
+            - CONFIG_MODEL_L2_MEMORY=1300000
+            - CONFIG_MODEL_LOGLEVEL=1
+            - CONFIG_ENABLE_NNTOOL=y
+            - CONFIG_BOARD_GAP9MOD_V1_0_B=y
+            - CONFIG_BOARD_GAP9EVK_V1_3=y
+            - CONFIG_LIB_GAP_LIB=y
+            - CONFIG_LIB_GAP_LIB_IMG_IO=y
+            - CONFIG_DRIVER_READFS=y
+            - CONFIG_DRIVER_HOSTFS=y
+            - CONFIG_DRIVER_TYPE_FLASH=y
+            - CONFIG_DRIVER_TYPE_RAM=y
+            - CONFIG_CL_SLAVE_CORE_STACK_SIZE=512
+
+    chw_board:
+        chip: gap9
+        board: gap9evk
+        platform: board
+        os: freertos
+        builder: cmake
+        flags:
+            - CONFIG_MODEL_SQ8=y
+            - PERF_CI=165000000
+            - CONFIG_MODEL_NE16=y
+            - CONFIG_MODEL_L2_MEMORY=1300000
+            - CONFIG_MODEL_LOGLEVEL=1
+            - CONFIG_ENABLE_NNTOOL=y
+            - CONFIG_BOARD_GAP9MOD_V1_0_B=y
+            - CONFIG_BOARD_GAP9EVK_V1_3=y
+            - CONFIG_LIB_GAP_LIB=y
+            - CONFIG_LIB_GAP_LIB_IMG_IO=y
+            - CONFIG_DRIVER_READFS=y
+            - CONFIG_DRIVER_HOSTFS=y
+            - CONFIG_DRIVER_TYPE_FLASH=y
+            - CONFIG_DRIVER_TYPE_RAM=y
+            - CONFIG_CL_SLAVE_CORE_STACK_SIZE=512
+
+    ne16_board:
+        chip: gap9
+        board: gap9evk
+        platform: board
+        os: freertos
+        builder: cmake
+        flags:
+            - CONFIG_MODEL_NE16=y
+            - PERF_CI=38000000
+            - CONFIG_MODEL_NE16=y
+            - CONFIG_MODEL_L2_MEMORY=1300000
+            - CONFIG_MODEL_LOGLEVEL=1
+            - CONFIG_ENABLE_NNTOOL=y
+            - CONFIG_BOARD_GAP9MOD_V1_0_B=y
+            - CONFIG_BOARD_GAP9EVK_V1_3=y
+            - CONFIG_LIB_GAP_LIB=y
+            - CONFIG_LIB_GAP_LIB_IMG_IO=y
+            - CONFIG_DRIVER_READFS=y
+            - CONFIG_DRIVER_HOSTFS=y
+            - CONFIG_DRIVER_TYPE_FLASH=y
+            - CONFIG_DRIVER_TYPE_RAM=y
+            - CONFIG_CL_SLAVE_CORE_STACK_SIZE=512
